@@ -1,7 +1,7 @@
 ---
 deploy:
   app: "App"
-  env: "{{ env|upper() }}"  
+  env: "{{ env|upper() }}"
   version: "{{ version }}"
   region: "us-west-2"
   ami:
@@ -16,11 +16,10 @@ deploy:
     tags:
       - Name: "App"
       - Version: "{{ version }}"
-
     subnet: []
   slack:
     username: "Ansible"
     channel: deploys
     icon_emoji: ":bot:"
-  promote: True
-      
+    message: "Deploy App environment"
+    description: "Environment deployed by Ansible"
