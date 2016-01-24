@@ -1,0 +1,17 @@
+---
+- name: Deploy AWS EC2 instances to environmetn A or B
+  hosts: local
+  connection: local
+  gather_facts: no
+  vars_files:
+    - custom.yml
+  vars_prompt:
+    - name: "env"
+      prompt: "What environment do you want to deploy [a/b]?"
+      private: no
+      default: False      
+    - name: "version"
+      prompt: "What version do you want to deploy [tag version]?"
+      private: no    
+  roles:
+    - role: aplyca.DeployAB

@@ -1,0 +1,84 @@
+---
+- debug: var=deploy
+  tags: vars
+
+- name: Fail the play if not environment provided
+  fail: msg="No environment provided"
+  when: env != 'a' and env != 'b'
+
+- name: Fail the play if version was not provided
+  fail: msg="No version provided"
+  when: version == ""
+
+- name: Get Instance AMI facts
+  ec2_remote_facts:
+    filters:
+      "tag:Name": "{{ deploy.app }} AMI"
+    region: "{{ deploy.region }}"
+  register: instance
+
+- name: Get ELB facts
+  ec2_elb_facts:
+    names: "{{ deploy.app }}-{{ deploy.env }}"
+    region: "{{ deploy.region }}"
+  register: elb
+
+
+
+- name: Fail if environment is not empty
+  fail:
+    msg: "Environment {{ deploy.env }} is not empty. The ELB '{{ deploy.app }}-{{ deploy.env }}' has {{ elb.elbs.0.instances|length() }} ({{ elb.elbs.0.instances|join(', ') }}) instances registered"
+  when: elb.elbs.0.instances|length() > 0
+
+- name: Create a new AMI
+  ec2_ami:
+    name: "{{ deploy.app }}-{{ deploy.version }}"
+    instance_id: "{{ instance.instances.0.id }}"
+    region: "{{ deploy.region }}"
+    wait: yes
+    wait_timeout: 3600
+    description: "{{ deploy.app }} version {{ deploy.version }}"
+  register: ami
+
+- name: Create a new launch config
+  ec2_lc:
+    name: "{{ deploy.app }}-{{ deploy.version }}"
+    image_id: "{{ ami.image_id }}"
+    region: "{{ deploy.region }}"
+    key_name: "{{ deploy.lc.key_name|default('') }}"
+    security_groups: "{{ deploy.lc.security_group|default('') }}"
+    instance_type: "{{ deploy.lc.instance_type|default('t1.micro') }}"
+    user_data: "{{ lookup('template', 'user_data.j2')|default('')}}"
+
+- name: Create/Update the autoscaling group
+  ec2_asg:
+    name: "{{ deploy.app }}-{{ deploy.env }}"
+    launch_config_name: "{{ deploy.app }}-{{ deploy.version }}"
+    region: "{{ deploy.region }}"
+    desired_capacity: "{{ deploy.asg.desired_capacity|default('1') }}"
+    min_size: "{{ deploy.asg.min_size|default('1') }}"
+    max_size: "{{ deploy.asg.max_size|default('1') }}"
+    replace_all_instances: yes
+    load_balancers: "{{ deploy.app }}-{{ deploy.env }}"
+    health_check_type: ELB
+    vpc_zone_identifier: "{{ deploy.asg.subnet }}"
+    wait_timeout: "{{ deploy.asg.wait_timeout|default('300') }}"
+    tags: "{{ deploy.asg.tags }}"
+  tags: asg
+
+- name: Send notification to Slack
+  slack:
+    token: "{{ deploy.slack.token }}"
+    msg: "{{ deploy.slack.intro|default('') }}Environment *{{ deploy.env }}* deployed with versión *{{ deploy.version }}* using ELB *{{ elb.elbs.0.name }}* ({{ elb.elbs.0.dns_name }}) and {{ deploy.asg.desired_capacity }} instances from AMI {{ ami.image_id }}{{ deploy.slack.outro|default('') }}"
+    username: "{{ deploy.slack.username }}"
+    channel: "{{ deploy.slack.channel }}"
+    icon_emoji: "{{ deploy.slack.icon_emoji }}"
+  when: deploy.slack.token is defined
+
+- name: Stop Instance AMI
+  ec2_remote_facts:
+    filters:
+      instance-state-name: stopped
+      "tag:Name": "{{ deploy.app }} AMI"
+    region: "{{ deploy.region }}"
+  when: deploy.ami.stop_when_finish
