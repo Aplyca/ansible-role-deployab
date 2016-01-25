@@ -1,11 +1,5 @@
 # Deploy A/B with Ansible
 
-## SSH
-
-* Use your SSH config file (~/.ssh/config) to confgire all the SSH connections, for example the inventory hosts connections.
-* Use SSH keys to connect to remote hosts
-* Use diferent SSH keys for diffrent environments (development/stage/prod)
-
 ## Ansible
 * Read how to use the **Ansible** provisioner in README.md of each role.
 * To know more about Ansible: http://www.ansible.com
@@ -17,9 +11,9 @@ Install the role dependencies using Ansible Galaxy
 ansible-galaxy install -r dependencies.yml
 ```
 
-## Releasing code
+## Deploy environment
 
-Release to Stage:
+Release to Prod:
 
 ```bash
 ansible-playbook -i inventories/local playbook.yml --extra-vars "@tests/custom.yml"
@@ -29,18 +23,6 @@ Script:
 
 ```bash
 ./deploy.py -ea -v1.0.0
-```
-
-Release to Prod:
-
-```bash
-ansible-playbook -i inventories/prod playbook.yml --extra-vars "@tests/custom.yml"
-```
-
-Script:
-
-```bash
-./deploy.py --env a --version 1.0.0
 ```
 
 ### Custom settings
