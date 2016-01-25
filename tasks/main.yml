@@ -1,6 +1,6 @@
 ---
-- debug: var=deploy
-  tags: vars
+#- debug: var=deploy
+#  tags: vars
 
 - name: Fail the play if not environment provided
   fail: msg="No environment provided"
@@ -28,7 +28,7 @@
     region: "{{ deploy.region }}"
   register: instance
 
-- name: Create a new AMI
+- name: Create a new App AMI
   ec2_ami:
     name: "{{ deploy.app }}-{{ deploy.version }}"
     instance_id: "{{ instance.instances.0.id }}"
@@ -36,6 +36,9 @@
     wait: yes
     wait_timeout: 3600
     description: "{{ deploy.app }} version {{ deploy.version }}"
+    tags:
+      Name: "{{ deploy.app }}"
+      Version: "{{ deploy.version }}"
   register: ami
 
 - name: Create a new launch config
@@ -75,7 +78,7 @@
         fields:
           - title: "ELB"
             value: "{{ elb.elbs.0.name }}"
-            short: "true"           
+            short: "true"
           - title: "Version"
             value: "{{ deploy.version }}"
             short: "true"
@@ -84,17 +87,17 @@
             short: "true"
           - title: "Instance type"
             value: "{{ deploy.lc.instance_type }}"
-            short: "true"  
+            short: "true"
           - title: "Instances"
             value: "{{ asg.instances | join(', ') }}"
-            short: "true"            
+            short: "true"
           - title: "URL"
             value: "{{ elb.elbs.0.dns_name }}"
-            short: "true"                                       
+            short: "true"
     username: "{{ deploy.slack.username }}"
     channel: "{{ deploy.slack.channel }}"
     icon_emoji: "{{ deploy.slack.icon_emoji }}"
-  when: deploy.slack.token is defined    
+  when: deploy.slack.token is defined
 
 - name: Stop Instance AMI
   ec2_remote_facts:
