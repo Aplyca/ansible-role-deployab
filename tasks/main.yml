@@ -50,6 +50,9 @@
     security_groups: "{{ deploy.lc.security_group|default('') }}"
     instance_type: "{{ deploy.lc.instance_type|default('t1.micro') }}"
     user_data: "{{ lookup('template', 'user_data.j2')|default('')}}"
+    instance_profile_name: "{{ deploy.lc.iam_role|default('') }}"
+    classic_link_vpc_id: ""
+    classic_link_vpc_security_groups: []
 
 - name: Create/Update the autoscaling group
   ec2_asg:
@@ -88,7 +91,7 @@
           - title: "Instance type"
             value: "{{ deploy.lc.instance_type }}"
             short: "true"
-          - title: "Instances"
+          - title: "Instances ({{ asg.instances|length() }})"
             value: "{{ asg.instances | join(', ') }}"
             short: "true"
           - title: "URL"

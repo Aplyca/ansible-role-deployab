@@ -10,6 +10,7 @@ deploy:
     security_group: []
     instance_type: "t1.micro"
     user_data: ""
+    iam_role: ""
   asg:
     wait_timeout: 3600
     desired_capacity: 1
