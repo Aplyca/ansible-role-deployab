@@ -25,8 +25,14 @@
   ec2_remote_facts:
     filters:
       "tag:Name": "{{ deploy.app }} AMI"
+      "instance-state-name": "running"
     region: "{{ deploy.region }}"
   register: instance
+
+- name: Fail if instance AMI is not running
+  fail:
+    msg: "Instance '{{ deploy.app }} AMI' is not running"
+  when: instance.instances|length() != 1
 
 - name: Create a new App AMI
   ec2_ami:
@@ -51,6 +57,7 @@
     instance_type: "{{ deploy.lc.instance_type|default('t1.micro') }}"
     user_data: "{{ lookup('template', 'user_data.j2')|default('')}}"
     instance_profile_name: "{{ deploy.lc.iam_role|default('') }}"
+    instance_monitoring: "{{ deploy.lc.monitoring|default('no') }}"
 
 - name: Create/Update the autoscaling group
   ec2_asg:
@@ -100,10 +107,19 @@
     icon_emoji: "{{ deploy.slack.icon_emoji }}"
   when: deploy.slack.token is defined
 
-- name: Stop Instance AMI
+- name: Terminate Instance AMI
   ec2_remote_facts:
     filters:
       instance-state-name: stopped
       "tag:Name": "{{ deploy.app }} AMI"
     region: "{{ deploy.region }}"
   when: deploy.ami.stop_when_finish
+
+- name: Terminate current instances.
+  ec2:
+    region: "{{ deploy.region }}"
+    exact_count: 0
+    image: "{{ ami.image_id }}"
+    count_tag:
+      Name: "{{ deploy.app }} AMI"
+

@@ -11,6 +11,7 @@ deploy:
     instance_type: "t1.micro"
     user_data: ""
     iam_role: ""
+    monitoring: no
   asg:
     wait_timeout: 3600
     desired_capacity: 1
