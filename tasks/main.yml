@@ -108,18 +108,11 @@
   when: deploy.slack.token is defined
 
 - name: Terminate Instance AMI
-  ec2_remote_facts:
-    filters:
-      instance-state-name: stopped
-      "tag:Name": "{{ deploy.app }} AMI"
-    region: "{{ deploy.region }}"
-  when: deploy.ami.stop_when_finish
-
-- name: Terminate current instances.
   ec2:
     region: "{{ deploy.region }}"
     exact_count: 0
     image: "{{ ami.image_id }}"
     count_tag:
       Name: "{{ deploy.app }} AMI"
+  when: deploy.ami.terminate_when_finish      
 

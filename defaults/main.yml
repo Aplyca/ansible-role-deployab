@@ -5,7 +5,7 @@ deploy:
   version: "{{ version }}"
   region: "us-west-2"
   ami:
-    stop_when_finish: True
+    terminate_when_finish: True
   lc:
     security_group: []
     instance_type: "t1.micro"
