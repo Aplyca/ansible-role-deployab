@@ -16,7 +16,7 @@ ansible-galaxy install -r dependencies.yml
 Release to Prod:
 
 ```bash
-ansible-playbook -i inventories/local playbook.yml --extra-vars "@tests/custom.yml"
+ansible-playbook -i inventories/local playbooks.yml --extra-vars "@tests/custom.yml"
 ```
 
 Script:
@@ -26,10 +26,10 @@ Script:
 ```
 
 ### Custom settings
-In order to use your own custom settings, use the "settings/custom.yml" file, you can override any variable used in the playbooks and roles.
+In order to use your own custom settings, use the "tests/custom.yml" file, you can override any variable used in the playbooks and roles.
 
 ```bash
-ansible-playbook -i inventories/local playbook.yml --extra-vars "@tests/custom.yml"
+ansible-playbook -i inventories/local playbooks.yml --extra-vars "@tests/custom.yml"
 ```
 
 By default the custom.yml file is ignored in git, be mindful to not add to version control your custom files or info.
@@ -40,7 +40,7 @@ Use the "inventories/custom" to place your custom inventory.
 
 ## Tests
 ```bash
-ansible-playbook -i inventories/local tests/playbook.yml
+ansible-playbook -i inventories/local tests/playbooks.yml
 ```
 
 ## Version control
